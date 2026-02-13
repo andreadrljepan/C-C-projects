@@ -1,0 +1,37 @@
+/*Program u C koji sortira niz realnih brojeva u opadajućem poretku koristeći Selection Sort algoritam. 
+Pri rješavanju zadatka korištena je isključivo pokazivačka aritmetika (*pointer arithmetic*) 
+bez korištenja indeksa. Demonstrira razumijevanje rada sa pokazivačima i osnovnih algoritama sortiranja.*/
+#include <stdio.h>
+
+void sortiraj (double niz[], int n){
+	double *i, *j, *max, temp;
+	for(i=niz; i<niz+n-1; i++){
+		max=i;
+		for(j=i+1; j<niz+n; j++){
+			if(*j>*max){
+				max=j;
+			}
+		}
+		temp=*i;
+		*i=*max;
+		*max=temp;
+	}
+
+}
+
+int main() {
+	int n, i;
+	printf("Unesite broj elemenata niza: ");
+	scanf("%d", &n);
+	double niz[100];
+	printf("Unesite elemente niza: \n");
+	for(i=0; i<n; i++){
+		scanf("%lf", niz+i);
+	}
+	sortiraj(niz, n);
+	printf("Poslije sortiranja: ");
+	for(i=0; i<n; i++){
+		printf("%.2f ", *(niz+i));
+	}
+	return 0;
+}
