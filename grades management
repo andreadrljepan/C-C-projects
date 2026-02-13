@@ -1,0 +1,141 @@
+/*Program u C za upravljanje ocjenama studenata koristeći strukture i datoteke. 
+Podaci o predmetima se učitavaju iz binarne datoteke predmeti.bin, a ocjene iz tekstualne datoteke ocjene.txt. 
+Program izračunava prosjek ocjena po predmetima i upisuje rezultate u datoteku statistika.txt, 
+sortirane po prosjeku u opadajućem redoslijedu. 
+
+Koristi funkcije:
+- ucitaj_predmete: učitava niz predmeta iz binarne datoteke
+- ucitaj_ocjene: učitava niz ocjena i povezuje ih sa predmetima
+- statistika: izračunava prosjeke i zapisuje u statistika.txt
+
+Demonstrira korištenje struktura, pokazivača, datoteka i sortiranja podataka u C.*/
+#include <stdio.h>
+#include <string.h>
+
+struct Datum { int dan, mjesec, godina; };
+struct Predmet {
+    int id;
+    char naziv[100];
+    double ects;
+};
+struct Ocjena {
+    char imeprezime[100];
+    int ocjena;
+    struct Predmet predmet;
+    struct Datum datum;
+};
+
+int ucitaj_predmete(struct Predmet *niz){
+    FILE *f=fopen("predmeti.bin", "rb");
+    if(f==NULL) return 0;
+    int i=0;
+    while(i<1000 && fread(&niz[i], sizeof(struct Predmet), 1, f)==1){
+        i++;
+    }
+    fclose(f);
+    return i;
+}
+
+int ucitaj_ocjene(struct Predmet *predmeti, int novi_predmet, struct Ocjena *ocjene){
+    FILE *fo=fopen("ocjene.txt", "r");
+    FILE *fs=fopen("studenti.bin", "rb");
+    if(fo==NULL || fs==NULL) return 0;
+    int n=0;
+    int indeks, grade, predavanje, dan, mjesec, godina;
+    while(n<1000 && fscanf(fo, "%d,%d,%d,%d,%d,%d", &indeks, &grade, &predavanje, &dan, &mjesec, &godina)==6){
+        int i;
+        for(i=0; i<novi_predmet; i++){
+            if(predmeti[i].id==predavanje){
+                break;
+            }
+        }
+        ocjene[n].predmet=predmeti[i];
+        ocjene[n].ocjena=grade;
+        ocjene[n].datum.dan=dan;
+        ocjene[n].datum.mjesec=mjesec;
+        ocjene[n].datum.godina=godina;
+        rewind(fs);
+        unsigned short IDs;
+        char ime[100];
+        while(fread(&IDs, sizeof(unsigned short), 1, fs)==1 && fread(ime, 100, 1, fs)==1){
+            if(IDs==indeks){
+                strcpy(ocjene[n].imeprezime, ime);
+                break;
+            }
+        }
+        n++;
+    }
+    fclose(fo);
+    fclose(fs);
+    return n;
+}
+void statistika(struct Predmet *p, int novi_predmet, struct Ocjena *ocjena, int nova_ocjena){
+    double suma[1000]={0};
+    int broj[1000]={0};
+    double prosjek[1000];
+    int i, j;
+    for(i=0; i<nova_ocjena; i++){
+        for(j=0; j<novi_predmet; j++){
+            if(ocjena[i].predmet.id==p[j].id){
+                suma[j]+=ocjena[i].ocjena;
+                broj[j]++;
+                break;
+            }
+        }
+    }
+    for(i=0; i<novi_predmet; i++){
+        prosjek[i]=(broj[i]>0) ? suma[i]/broj[i] : -1;
+    }
+    for(i=0; i<novi_predmet-1; i++){
+        for(j=i+1; j<novi_predmet; j++){
+            if(prosjek[j]>prosjek[i]){
+                double tmp=prosjek[i];
+                prosjek[i]=prosjek[j];
+                prosjek[j]=tmp;
+                
+                struct Predmet temp=p[i];
+                p[i]=p[j];
+                p[j]=temp;
+                
+                int tb=broj[i];
+                broj[i]=broj[j];
+                broj[j]=tb;
+            }
+        }
+    }
+    FILE *f=fopen("statistika.txt", "w");
+    if(f==NULL) return;
+    for(i=0; i<novi_predmet; i++){
+        if(broj[i]>0){
+            fprintf(f, "%s,%.2f\n", p[i].naziv, prosjek[i]);
+        }
+    }
+    fclose(f);
+}
+
+int main() {
+	 struct Predmet predmeti[1000];
+    struct Ocjena ocjene[1000];
+
+    // 1. Ucitaj predmete iz binarne datoteke
+    int broj_predmeta = ucitaj_predmete(predmeti);
+    if (broj_predmeta == 0) {
+        printf("Greska pri ucitavanju predmeta.\n");
+        return 1;
+    }
+
+    // 2. Ucitaj ocjene iz tekstualne i studentske datoteke
+    int broj_ocjena = ucitaj_ocjene(predmeti, broj_predmeta, ocjene);
+    if (broj_ocjena == 0) {
+        printf("Greska pri ucitavanju ocjena.\n");
+        return 1;
+    }
+
+    // 3. Izracunaj statistiku i upisi u statistika.txt
+    statistika(predmeti, broj_predmeta, ocjene, broj_ocjena);
+
+    printf("Statistika je uspjesno izracunata i zapisana u statistika.txt\n");
+
+    return 0;
+}
+
