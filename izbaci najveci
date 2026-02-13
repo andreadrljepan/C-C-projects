@@ -1,0 +1,44 @@
+/*Program u C koji omogućuje unos niza realnih brojeva. 
+Pronalaženje člana niza koji se najviše puta ponavlja, te izbacivanje svih članova većih od njega, 
+pri čemu se redoslijed elemenata ne mijenja. Ako se više članova ponavlja isti broj puta, koristi se najmanji od njih. 
+Rješenje je implementirano bez korištenja pomoćnog niza.*/
+
+#include <stdio.h>
+
+int main() {
+    double niz[100];
+    int i, vel;
+	
+    printf("Unesite broj clanova niza: ");
+    scanf("%d",&vel);
+    printf("Unesite clanove niza: ");
+    for(i=0; i<vel; i++)
+        scanf("%lf", &niz[i]);
+
+    int j, br=0, noviBr=0;
+    double pom=0;
+    for(i=0; i<vel; i++){
+        br=0;
+        for(j=0; j<vel; j++){
+            if(niz[i]==niz[j]){
+                br++;
+            }
+        }
+        if(br>noviBr || (br==noviBr && niz[i]<pom)){
+            pom=niz[i];
+            noviBr=br;
+        }
+    }
+    int nVel=0;
+    for(i=0; i<vel; i++){
+        if(niz[i]<=pom){
+            niz[nVel]=niz[i];
+            nVel++;
+        }
+        }
+    vel=nVel;
+    printf("Nakon izbacivanja niz glasi:\n");
+    for (i=0; i<vel; i++)
+        printf("%g ", niz[i]);
+    return 0;
+}
