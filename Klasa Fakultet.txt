@@ -1,0 +1,169 @@
+
+/*Definirati klasu Fakultet koja ima niz klasa Student.
+Klasa student ima string ime i prezime i niz int ocjena
+ koji moze biti 10 velicinom jer ima 10 predmeta.
+Klasa student ima funkcije dajProsjek koja vraca prosjek int ocjena tog studenta.
+Takodjer ima funkciju unesi ocjene koja upisuje redom sa tastature ocjene
+Za studenta u niż i ima funkcije unesiIme i unesiPrezime.
+Ima funkciju ispisi ocjene koja ispisuje sve studentske ocjene na ekran.
+Ima funkciju Ispisi Ime i prezime.
+
+Klasa Fakultet se mora napraviti eksplicitno kroz parametar cjelobrojni broj 
+Koliko ima studenata - dinamicka alokacija niza
+Kreirati i destruktor za oslobadjanje memorije.
+Eksplicitni konstruktor sa inicijalizacijskom listom Studenata.
+Operator dodjele kopirajuci i pomjerajuci.
+Konstruktor kopirajuci i pomjerajuci.
+
+U main funkciji demonstrirati program pri unosu 10 studenata.
+I unosa njihovih ocjena imena prezimena i prikaza na ekran.
+
+Friend funkcija prima dva studenta i ispisuje koji student je bolji.
+I void funkcija ispisi poredak koja ce ispisati sve studente po najboljem prosjeku.*/
+
+
+//TP 2025/2026: LV 11, Zadatak 1
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <initializer_list>
+
+using namespace std;
+
+class Student{
+	string ime;
+	string prezime;
+	int ocjene[10]{};
+
+	public:
+	Student()=default;
+	void UnesiIme(){
+		cout<<"Unesite ime: ";
+		cin>>ime;
+	}
+	void UnesiPrezime(){
+		cout<<"Unesite prezime: ";
+		cin>>prezime;
+	}
+	void UnesiOcjene(){
+		cout<<"Unesite ocjene: ";
+		for(int i=0; i<10; i++){
+			cout<<i+1<<". ocjena";
+			cin>>ocjene[i];
+		}
+	}
+	double DajProsjek() const{
+		double suma=0;
+		for(int i=0; i<10; i++){
+			suma+=ocjene[i];
+		}
+		return suma/10.0;
+	}
+	void IspisiOcjene() const{
+		cout<<"Ocjene: ";
+		for(int i=0; i<10; i++){
+			cout<<ocjene[i]<<endl;
+		}
+	}
+	void IspisiImeiPrezime() const{
+		cout<<ime<<" "<<prezime;
+	}
+	friend void IspisiTkoJeBolji(const Student &s1, const Student &s2){
+		double prosjek1=s1.DajProsjek();
+		double prosjek2=s2.DajProsjek();
+		if(prosjek1>prosjek2){
+			cout<<"Bolji student je: ";
+			s1.IspisiImeiPrezime();
+		} else if(prosjek2>prosjek1){
+			cout<<"Bolji student je: ";
+			s2.IspisiImeiPrezime();
+		} else {
+			cout<<"Oba studenta imaju isti prosjek";
+		}
+	}
+};
+
+class Fakultet{
+	int broj_studenata;
+	Student* studenti;
+	
+	public:
+	explicit Fakultet(int broj) : broj_studenata(broj){
+		studenti=new Student[broj_studenata];
+	}
+	explicit Fakultet(initializer_list<Student> lista) : broj_studenata(lista.size()){
+		studenti=new Student[broj_studenata];
+		int i=0;
+		for(const auto &s : lista){
+			studenti[i]=s;
+			i++;
+		}
+	}
+	~Fakultet(){
+		delete[] studenti;
+	}
+	Fakultet(const Fakultet &f) : broj_studenata(f.broj_studenata){
+		studenti=new Student[broj_studenata];
+		for(int i=0; i<broj_studenata; i++){
+			studenti[i]=f.studenti[i];
+		}
+	}
+	Fakultet &operator=(const Fakultet &f){
+		if(this==&f) return *this;
+		delete[] studenti;
+		broj_studenata=f.broj_studenata;
+		studenti=new Student[broj_studenata];
+		for(int i=0; i<broj_studenata; i++){
+			studenti[i]=f.studenti[i];
+		}
+		return *this;
+	}
+	Fakultet(Fakultet &&f) noexcept : broj_studenata(f.broj_studenata), studenti(f.studenti){
+		f.studenti=nullptr;
+		f.broj_studenata=0;
+	}
+	Fakultet &operator=(Fakultet &&f) noexcept{
+		if(this==&f) return *this;
+		delete[] studenti;
+		broj_studenata=f.broj_studenata;
+		studenti=f.studenti;
+		f.studenti=nullptr;
+		f.broj_studenata=0;
+		return *this;
+	}
+	Student& DajStudenta(int indx){
+		return studenti[indx];
+	}
+	int DajBrojStudenata() const{
+		return broj_studenata;
+	}
+	void IspisiPoredak() const{
+		vector<Student> raspon(studenti, studenti+broj_studenata);
+		sort(raspon.begin(), raspon.end(), [](const Student &st1, const Student &st2){
+			return st1.DajProsjek()>st2.DajProsjek();
+		});
+		cout<<"Poredak po prosjeku: "<<endl;
+		for(auto i=0; i<raspon.size(); i++){
+			raspon[i].IspisiImeiPrezime();
+			cout<<endl;
+		}
+	}
+};
+
+int main ()
+{
+const int br_studenata=3;
+Fakultet f(br_studenata);
+for(int i=0; i<f.DajBrojStudenata(); i++){
+	f.DajStudenta(i).UnesiIme();
+	f.DajStudenta(i).UnesiPrezime();
+	f.DajStudenta(i).UnesiOcjene();
+}
+f.IspisiPoredak();
+IspisiTkoJeBolji(f.DajStudenta(0), f.DajStudenta(1));
+	return 0;
+}
+
+
